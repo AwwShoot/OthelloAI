@@ -26,6 +26,100 @@ class Othello:
         new_state = self.clone()
         new_state.board[x][y] = new_state.player
         # check lines for tiles to flip
+        total_flips = 0
+        opponent =  (new_state.player%2) + 1 #easy way to flip player val
 
-        new_state.player = (new_state.player%2) + 1#Alternate the player
+        # Check below
+        possible_flips = 0
+        position = [x, y]
+        while position[1] < 8 and new_state.board[position[0]][position[1] + 1] == opponent:
+            possible_flips += 1
+            position[1] += 1
+        if position[1] != 8: # found an allied tile before the edge
+            total_flips += possible_flips
+            for i in range(y, position[1]): #Flip the pieces
+                new_state.board[x][i] = new_state.player
+
+        # Check below and to the right
+        possible_flips = 0
+        position = [x, y]
+        while position[1] < 8 and position[0] < 8 and new_state.board[position[0]+ 1][position[1] + 1] == opponent:
+            possible_flips += 1
+            position[1] += 1
+            position[0] += 1
+        if position[1] < 8 and position[0] < 8:  # found an allied tile before the edge
+            total_flips += possible_flips
+            for i, j in range(x, position[0]), range(y, position[1]): #Flip the pieces
+                new_state.board[i][j] = new_state.player
+
+        # Check to the right
+        possible_flips = 0
+        position = [x, y]
+        while position[0] < 8 and new_state.board[position[0] + 1][position[1] ] == opponent:
+            possible_flips += 1
+            position[0] += 1
+        if position[0] < 8:  # found an allied tile before the edge
+            total_flips += possible_flips
+            for i in range(x, position[0]):  # Flip the pieces
+                new_state.board[i][y] = new_state.player
+
+        # Check above and to the right
+        possible_flips = 0
+        position = [x, y]
+        while position[1] > -1 and position[0] < 8 and new_state.board[position[0] + 1][position[1] - 1] == opponent :
+            possible_flips += 1
+            position[1] -= 1
+            position[0] += 1
+        if position[1] > -1 and position[0] < 8:  # found an allied tile before the edge
+            total_flips += possible_flips
+            for i, j in range(x, position[0]), range(position[1], y):  # Flip the pieces
+                new_state.board[i][j] = new_state.player
+
+        # Check above
+        possible_flips = 0
+        position = [x, y]
+        while position[1] > -1 and new_state.board[position[0]][position[1] - 1] == opponent:
+            possible_flips += 1
+            position[1] -= 1
+        if position[1] > -1:  # found an allied tile before the edge
+            total_flips += possible_flips
+            for i in range(position[1], y):  # Flip the pieces
+                new_state.board[x][i] = new_state.player
+
+        # Check above and to the left
+        possible_flips = 0
+        position = [x, y]
+        while position[1] > -1 and position[0] > -1 and new_state.board[position[0] - 1][position[1] - 1] == opponent:
+            possible_flips += 1
+            position[1] -= 1
+            position[0] -= 1
+        if position[1] > -1 and position[0] > -1:  # found an allied tile before the edge
+            total_flips += possible_flips
+            for i, j in range(position[0], x), range(position[1], y):  # Flip the pieces
+                new_state.board[i][j] = new_state.player
+
+        # Check to the left
+        possible_flips = 0
+        position = [x, y]
+        while position[0] > -1 and new_state.board[position[0]][position[1] - 1] == opponent:
+            possible_flips += 1
+            position[0] -= 1
+        if position[0] > -1:  # found an allied tile before the edge
+            total_flips += possible_flips
+            for i in range(position[0], x):  # Flip the pieces
+                new_state.board[i][y] = new_state.player
+
+        # Check below and to the left
+        possible_flips = 0
+        position = [x, y]
+        while position[1] < 8 and position[0] > -1 and new_state.board[position[0] - 1][position[1] + 1] == opponent:
+            possible_flips += 1
+            position[1] += 1
+            position[0] -= 1
+        if position[1] < 8 and position[0] > -1:  # found an allied tile before the edge
+            total_flips += possible_flips
+            for i, j in range(position[0], x), range(y, position[1]):  # Flip the pieces
+                new_state.board[i][j] = new_state.player
+
+        new_state.player = opponent #Alternate the player
 

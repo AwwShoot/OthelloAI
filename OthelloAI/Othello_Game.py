@@ -3,123 +3,127 @@ class Othello:
     # I know I could write that programmatically and make it shorter
     # But this means a new board can be easily copy/pasted/modified for testing heuristics
     # 1 is black pieces, which go first, 2 is white pieces.
-    board = [[0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0],
-             [0,0,0,2,1,0,0,0],
-             [0,0,0,1,2,0,0,0],
-             [0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0],
-             [0,0,0,0,0,0,0,0]]
+    board = [[0,0,0,0,0,0,0,0], #0
+             [0,0,0,0,0,0,0,0], #1
+             [0,0,0,0,0,0,0,0], #2
+             [0,0,0,2,1,0,0,0], #3
+             [0,0,0,1,2,0,0,0], #4
+             [0,0,0,0,0,0,0,0], #5
+             [0,0,0,0,0,0,0,0], #6
+             [0,0,0,0,0,0,0,0]] #7
     player = 1 #1 for black 2 for white
-    turn = 1 # number of elapsed turns for ply
-    def __init__(self, board, player, turn):
+    turn = 0 # number of elapsed turns for ply
+
+    # Heuristic tracking values
+    board_value = 0 # All heuristic values contribute to this, which will act as the true "value" of this board state
+    total_white = 0
+    total_black = 0
+
+    def __init__(self, board = board, player = player, turn = turn):
         self.board = board
         self.player = player
         self.turn = turn
-    def clone(self):
-        return Othello(self.board.copy(), self.player, self.turn)
+    def clone(self): # shallow clone
+
+        return Othello([x.copy() for x in self.board.copy()], self.player, self.turn)
     def play(self, x, y): #returns a new Othello object representing the new game state
         if self.board[x][y] != 0:
             print("Cannot place there, another piece already occupies the space.")
             return #return None if it's an illegal board state
         new_state = self.clone()
-        new_state.board[x][y] = new_state.player
+        new_state.turn += 1
+        new_state.board[x][y] = new_state.player# row major order lets things be more readable
         # check lines for tiles to flip
         total_flips = 0
         opponent =  (new_state.player%2) + 1 #easy way to flip player val
 
         # Check below
-        possible_flips = 0
-        position = [x, y]
-        while position[1] < 8 and new_state.board[position[0]][position[1] + 1] == opponent:
-            possible_flips += 1
-            position[1] += 1
-        if position[1] != 8: # found an allied tile before the edge
-            total_flips += possible_flips
-            for i in range(y, position[1]): #Flip the pieces
-                new_state.board[x][i] = new_state.player
+        total_flips += new_state.flip(x, y, 0, 1)
 
         # Check below and to the right
-        possible_flips = 0
-        position = [x, y]
-        while position[1] < 8 and position[0] < 8 and new_state.board[position[0]+ 1][position[1] + 1] == opponent:
-            possible_flips += 1
-            position[1] += 1
-            position[0] += 1
-        if position[1] < 8 and position[0] < 8:  # found an allied tile before the edge
-            total_flips += possible_flips
-            for i, j in range(x, position[0]), range(y, position[1]): #Flip the pieces
-                new_state.board[i][j] = new_state.player
+        total_flips += new_state.flip(x, y, 1, 1)
 
         # Check to the right
-        possible_flips = 0
-        position = [x, y]
-        while position[0] < 8 and new_state.board[position[0] + 1][position[1] ] == opponent:
-            possible_flips += 1
-            position[0] += 1
-        if position[0] < 8:  # found an allied tile before the edge
-            total_flips += possible_flips
-            for i in range(x, position[0]):  # Flip the pieces
-                new_state.board[i][y] = new_state.player
+        total_flips += new_state.flip(x, y, 1, 0)
 
         # Check above and to the right
-        possible_flips = 0
-        position = [x, y]
-        while position[1] > -1 and position[0] < 8 and new_state.board[position[0] + 1][position[1] - 1] == opponent :
-            possible_flips += 1
-            position[1] -= 1
-            position[0] += 1
-        if position[1] > -1 and position[0] < 8:  # found an allied tile before the edge
-            total_flips += possible_flips
-            for i, j in range(x, position[0]), range(position[1], y):  # Flip the pieces
-                new_state.board[i][j] = new_state.player
+        total_flips += new_state.flip(x, y, 1, -1)
 
         # Check above
-        possible_flips = 0
-        position = [x, y]
-        while position[1] > -1 and new_state.board[position[0]][position[1] - 1] == opponent:
-            possible_flips += 1
-            position[1] -= 1
-        if position[1] > -1:  # found an allied tile before the edge
-            total_flips += possible_flips
-            for i in range(position[1], y):  # Flip the pieces
-                new_state.board[x][i] = new_state.player
+        total_flips += new_state.flip(x, y, 0, -1)
 
         # Check above and to the left
-        possible_flips = 0
-        position = [x, y]
-        while position[1] > -1 and position[0] > -1 and new_state.board[position[0] - 1][position[1] - 1] == opponent:
-            possible_flips += 1
-            position[1] -= 1
-            position[0] -= 1
-        if position[1] > -1 and position[0] > -1:  # found an allied tile before the edge
-            total_flips += possible_flips
-            for i, j in range(position[0], x), range(position[1], y):  # Flip the pieces
-                new_state.board[i][j] = new_state.player
+        total_flips += new_state.flip(x, y, -1, -1)
 
         # Check to the left
-        possible_flips = 0
-        position = [x, y]
-        while position[0] > -1 and new_state.board[position[0]][position[1] - 1] == opponent:
-            possible_flips += 1
-            position[0] -= 1
-        if position[0] > -1:  # found an allied tile before the edge
-            total_flips += possible_flips
-            for i in range(position[0], x):  # Flip the pieces
-                new_state.board[i][y] = new_state.player
+        total_flips += new_state.flip(x, y, -1, 0)
 
         # Check below and to the left
+        total_flips += new_state.flip(x, y, -1, 1)
+
+        new_state.player = opponent  # Alternate the player
+        if total_flips > 0:
+            new_state.set_heuristics()
+            return new_state
+        else: #A move that causes no flips is illegal.
+            return None
+
+
+    def flip(self, x, y, x_dir, y_dir):
+        opponent =  (self.player%2) + 1
         possible_flips = 0
         position = [x, y]
-        while position[1] < 8 and position[0] > -1 and new_state.board[position[0] - 1][position[1] + 1] == opponent:
-            possible_flips += 1
-            position[1] += 1
-            position[0] -= 1
-        if position[1] < 8 and position[0] > -1:  # found an allied tile before the edge
-            total_flips += possible_flips
-            for i, j in range(position[0], x), range(y, position[1]):  # Flip the pieces
-                new_state.board[i][j] = new_state.player
+        position[0] += x_dir# Move the checker along
+        position[1] += y_dir 
+        while -1 < position[0] < 8 and -1 < position[1] < 8: # Stay in bounds
+            if self.board[position[0]][position[1]] == opponent:
+                possible_flips += 1
+                position[0] += x_dir
+                position[1] += y_dir
+            elif self.board[position[0]][position[1]] == 0:
+                return 0
+            else: # Found an ally, modify the board. 
+                position[0] -= x_dir
+                position[1] -= y_dir # Move back
+                while position[0] != x or position[1] != y:
+                    self.board[position[0]][position[1]] = self.player
+                    position[0] -= x_dir
+                    position[1] -= y_dir
+                return possible_flips
+        return 0# Hit a bound before an allied piece
+    def printout(self, verbose=False):
+        string_components = [] #Joining a list of strings is faster than several concats on larger strings
+        for row in self.board:
+            for tile in row:
+                tile_str = ''
+                match tile:
+                    case 0:
+                        tile_str = '- '
+                    case 1:
+                        tile_str = 'X '
+                    case 2:
+                        tile_str = '0 '
+                string_components.append(tile_str)
+            string_components.append("\n")
+        # Display heuristics as well if verbose
+        if verbose:
+            string_components.append(f"\nTurn number: {self.turn}\n")
+            string_components.append(f"Player {self.player} to move\n")
+            string_components.append(f"White has {self.total_white} pieces\n")
+            string_components.append(f"Black has {self.total_black} pieces")
+        print("".join(string_components))
 
-        new_state.player = opponent #Alternate the player
 
+    def set_heuristics(self): # sets heuristic values of the board.
+
+        for row in self.board:
+            for tile in row:
+                if tile == 1:
+                    self.total_black += 1
+                elif tile == 2:
+                    self.total_white += 1
+
+        if self.player == 1:
+            self.board_value = self.total_black - self.total_white
+        else:
+            self.board_value = self.total_white - self.total_black

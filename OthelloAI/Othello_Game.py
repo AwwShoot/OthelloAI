@@ -141,21 +141,31 @@ class Othello:
      
         
     def minimax(self, state, depth, maximizing_player):
-        if depth == 0 or self.is_terminal_node(state):
+        if depth == 0 or self.is_game_over(state):
             return state.board_value
 
         if maximizing_player:
-            max_eval = -math.inf
+            max_eval = float('-inf')
             for move in self.get_possible_moves(state):
                 eval = self.minimax(move, depth - 1, False)
                 max_eval = max(max_eval, eval)
             return max_eval
         else:
-            min_eval = math.inf
+            min_eval = float('inf')
             for move in self.get_possible_moves(state):
                 eval = self.minimax(move, depth - 1, True)
                 min_eval = min(min_eval, eval)
             return min_eval
+      
+    def find_best_move(self, state):
+        best_eval = float('-inf')
+        best_move = None
+        for move in self.get_possible_moves(state):
+            eval = self.minimax(move, self.depth, False)
+            if eval > best_eval:
+                best_eval = eval
+                best_move = move
+        return best_move      
         
     def is_game_over(self, state):
         

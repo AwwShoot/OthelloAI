@@ -91,6 +91,7 @@ class Othello:
                     position[1] -= y_dir
                 return possible_flips
         return 0# Hit a bound before an allied piece
+        
     def printout(self, verbose=False):
         string_components = [] #Joining a list of strings is faster than several concats on larger strings
         for row in self.board:
@@ -127,3 +128,35 @@ class Othello:
             self.board_value = self.total_black - self.total_white
         else:
             self.board_value = self.total_white - self.total_black
+        
+    def get_possible_moves(self, state):
+        moves = []
+        for x in range(8):
+            for y in range(8):
+                if state.board[x][y] == 0:
+                    new_state = state.play(x, y)
+                    if new_state:
+                        moves.append(new_state)
+        return moves 
+     
+        
+    def minimax(self, state, depth, maximizing_player):
+        if depth == 0 or self.is_terminal_node(state):
+            return state.board_value
+
+        if maximizing_player:
+            max_eval = -math.inf
+            for move in self.get_possible_moves(state):
+                eval = self.minimax(move, depth - 1, False)
+                max_eval = max(max_eval, eval)
+            return max_eval
+        else:
+            min_eval = math.inf
+            for move in self.get_possible_moves(state):
+                eval = self.minimax(move, depth - 1, True)
+                min_eval = min(min_eval, eval)
+            return min_eval
+        
+    def is_game_over(self, state):
+        
+        return len(self.get_possible_moves(state)) == 0

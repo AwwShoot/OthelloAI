@@ -13,7 +13,8 @@ class Othello:
              [0,0,0,0,0,0,0,0]] #7
     player = 1 #1 for black 2 for white
     turn = 0 # number of elapsed turns for ply
-
+    depth = 3
+    
     # Heuristic tracking values
     board_value = 0 # All heuristic values contribute to this, which will act as the true "value" of this board state
     total_white = 0
@@ -26,6 +27,7 @@ class Othello:
     def clone(self): # shallow clone
 
         return Othello([x.copy() for x in self.board.copy()], self.player, self.turn)
+    
     def play(self, x, y): #returns a new Othello object representing the new game state
         if self.board[x][y] != 0:
             print("Cannot place there, another piece already occupies the space.")
@@ -128,7 +130,8 @@ class Othello:
             self.board_value = self.total_black - self.total_white
         else:
             self.board_value = self.total_white - self.total_black
-        
+    
+    # Dig through the tiles looking for ones not white or black    
     def get_possible_moves(self, state):
         moves = []
         for x in range(8):
@@ -139,7 +142,7 @@ class Othello:
                         moves.append(new_state)
         return moves 
      
-        
+    # MinMax     
     def minimax(self, state, depth, maximizing_player):
         if depth == 0 or self.is_game_over(state):
             return state.board_value
@@ -156,7 +159,8 @@ class Othello:
                 eval = self.minimax(move, depth - 1, True)
                 min_eval = min(min_eval, eval)
             return min_eval
-      
+    
+    # We check possible moves and use MinMax to find the best one  
     def find_best_move(self, state):
         best_eval = float('-inf')
         best_move = None
@@ -166,7 +170,8 @@ class Othello:
                 best_eval = eval
                 best_move = move
         return best_move      
-        
+    
+    # Game end Condition    
     def is_game_over(self, state):
         
         return len(self.get_possible_moves(state)) == 0

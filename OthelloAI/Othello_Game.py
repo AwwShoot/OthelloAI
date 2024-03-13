@@ -122,18 +122,19 @@ class Othello:
 
     def set_heuristics(self): # sets heuristic values of the board.
 
-        for row in self.board:
-            for tile in row:
-                if tile == 1:
-                    self.total_black += 1
-                elif tile == 2:
-                    self.total_white += 1
 
-        # Count triple for pieces that can't be changed anymore
+
+        # Count extra for pieces that can't be changed anymore
         # A piece can't be changed if on at least one side of the X, Y, AND diagonal axis all pieces are its color.
         for x in range(8):
             for y in range(8):# pick a point
                 value = self.board[x][y]
+                if value == 1:
+                    self.total_black += 1
+                elif value == 2:
+                    self.total_white += 1
+                else:
+                    continue # No need to calculate a blank tile
                 # Check the X axis
                 x_before = True
                 x_after = True

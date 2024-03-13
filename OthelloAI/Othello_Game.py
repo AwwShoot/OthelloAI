@@ -13,7 +13,7 @@ class Othello:
              [0,0,0,0,0,0,0,0]] #7
     player = 1 #1 for black 2 for white
     turn = 0 # number of elapsed turns for ply
-    depth = 2
+    depth = 3
     
     # Heuristic tracking values
     board_value = 0 # All heuristic values contribute to this, which will act as the true "value" of this board state
@@ -67,7 +67,7 @@ class Othello:
 
         new_state.player = opponent  # Alternate the player
         if total_flips > 0:
-            new_state.set_heuristics()
+            #new_state.set_heuristics()
             return new_state
         else: #A move that causes no flips is illegal.
             return None
@@ -112,6 +112,7 @@ class Othello:
             string_components.append("\n")
         # Display heuristics as well if verbose
         if verbose:
+            self.set_heuristics()
             string_components.append(f"\nTurn number: {self.turn}\n")
             string_components.append(f"Player {self.player} to move\n")
             string_components.append(f"White has {self.total_white} pieces\n")
@@ -152,7 +153,7 @@ class Othello:
                             y_before = False
                         else:
                             y_after = False
-                pass
+
                 # Check if the diagonal axis in a lazy, but clever way.
                 xy_before = True
                 xy_after = True
@@ -186,7 +187,7 @@ class Othello:
         # With high branching factor implicitly unless they are really worth investigating.
         # This will speed things up and allow for potentially higher ply in the time it takes other algorithms to predict
         future_board = self.clone()
-        future_board.player = (self.player%2) + 1 # This board but when the opponent's about to play.
+        future_board.player = (self.player % 2) + 1  # This board but when the opponent's about to play.
         if self.player == 1:
             self.board_value = (self.total_black + 2 * self.permanent_black
                                 - self.total_white + 2 * self.permanent_white
@@ -221,22 +222,31 @@ class Othello:
                         moves.append(new_state)
         return moves 
 
-    # MinMax     
-    def minimax(self, state, depth, maximizing_player):
+    # MinMax With Alpha-Beta Pruning
+    # Will always use an odd-numbered ply that looks for the best future board for the player calling this
+    # Find the lowest value returned to ply = 1 (I.E. what the enemy will pick at the end of our prediction)
+    # Pass it up to ply > 1
+    # At ply > 1, pass down this pruning value. If a min value lower than that is found in a different decision path
+    # Stop calculating that branch, pruning it.
+    # If a higher minimum can be found, set the pruning value to that.
+    def minimax(self, state, depth, maximizing_player, prune = float('-inf')):
         if depth == 0 or self.is_game_over(state):
-            return state.board_value
+            state.set_heuristics()
+            return state.board_value # Only time board value is asked for so why calc it any other time
 
         if maximizing_player:
             max_eval = float('-inf')
             for move in self.get_possible_moves(state):
-                eval = self.minimax(move, depth - 1, False)
+                eval = self.minimax(move, depth - 1, False, max_eval)
                 max_eval = max(max_eval, eval)
             return max_eval
         else:
             min_eval = float('inf')
             for move in self.get_possible_moves(state):
-                eval = self.minimax(move, depth - 1, True)
+                eval = self.minimax(move, depth - 1, True, prune)
                 min_eval = min(min_eval, eval)
+                if min_eval < prune:
+                    return min_eval # Cut off calculation early if opponent will do worse than your worst option elsewhere
             return min_eval
     
     # We check possible moves and use MinMax to find the best one  

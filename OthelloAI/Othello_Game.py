@@ -13,12 +13,14 @@ class Othello:
              [0,0,0,0,0,0,0,0]] #7
     player = 1 #1 for black 2 for white
     turn = 0 # number of elapsed turns for ply
-    depth = 3
+    depth = 2
     
     # Heuristic tracking values
     board_value = 0 # All heuristic values contribute to this, which will act as the true "value" of this board state
     total_white = 0
     total_black = 0
+    permanent_black = 0
+    permanent_white = 0
 
     def __init__(self, board = board, player = player, turn = turn):
         self.board = board
@@ -126,22 +128,99 @@ class Othello:
                 elif tile == 2:
                     self.total_white += 1
 
+        # Count triple for pieces that can't be changed anymore
+        # A piece can't be changed if on at least one side of the X, Y, AND diagonal axis all pieces are its color.
+        for x in range(8):
+            for y in range(8):# pick a point
+                value = self.board[x][y]
+                # Check the X axis
+                x_before = True
+                x_after = True
+                for check_x in range(8):
+                    if self.board[check_x][y] != value:
+                        if check_x < x:
+                            x_before = False
+                        else:
+                            x_after = False
+
+                # Check the Y axis
+                y_before = True
+                y_after = True
+                for check_y in range(8):
+                    if self.board[x][check_y] != value:
+                        if check_y < y:
+                            y_before = False
+                        else:
+                            y_after = False
+                pass
+                # Check if the diagonal axis in a lazy, but clever way.
+                xy_before = True
+                xy_after = True
+                check_xy = 0
+                while x - check_xy > -1 and y - check_xy > -1:
+                    if self.board[x - check_xy][y-check_xy] != value:
+                        xy_before = False
+                        break
+                    check_xy += 1
+                check_xy = 0
+                while x + check_xy < 8 and y + check_xy < 8:
+                    if self.board[x + check_xy][y + check_xy] != value:
+                        xy_after = False
+                        break
+                    check_xy += 1
+                # If at least one side on all axis are blocked, then count the tile
+                if (x_before or x_after) and (y_before or y_after) and (xy_before or xy_after):
+                    if value == 1:
+                        self.permanent_black += 1
+                    else:
+                        self.permanent_white += 1
+
+        # Board state is currently measured as value for player minus value for opponent
+        # minus five times number of valid moves the opponent has
+        #-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#
+        # Value for a given player is equal to the number of tokens in their color
+        # Plus twice the number of tokens in their color that cannot be changed (essentially counting them as triple)
+        #-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#
+        # The algorithm is therefore optimizing to limit opponent options as quickly as possible
+        # By including enemy options in the scoring, Alpha-Beta pruning will prune out boards
+        # With high branching factor implicitly unless they are really worth investigating.
+        # This will speed things up and allow for potentially higher ply in the time it takes other algorithms to predict
+        future_board = self.clone()
+        future_board.player = (self.player%2) + 1 # This board but when the opponent's about to play.
         if self.player == 1:
-            self.board_value = self.total_black - self.total_white
+            self.board_value = (self.total_black + 2 * self.permanent_black
+                                - self.total_white + 2 * self.permanent_white
+                                - 5 * len(self.get_possible_moves(future_board)))
         else:
-            self.board_value = self.total_white - self.total_black
-    
+            self.board_value = (self.total_white + 2 * self.permanent_white
+                                - self.total_black + 2 * self.permanent_black
+                                - 5 * len(self.get_possible_moves((future_board))))
+    # Returns true iff the given coordinate has a tile immediately adjacent or diagonal to it
+    def potentially_playable_tile(self, state, x, y):
+        valid = False
+        for i in range(3):
+            for j in range(3):
+                point_x = x - 1 + i
+                point_y = y - 1 + j
+                if -1 < point_x < 8 and -1 < point_y < 8:
+                    if state.board[point_x][point_y] != 0:
+                        if i == j and j == 1:
+                            return False # Target tile is taken.
+                        else:
+                            valid = True # At least one potential tile to flip makes it valid
+        return valid
+
     # Dig through the tiles looking for ones not white or black    
     def get_possible_moves(self, state):
         moves = []
         for x in range(8):
             for y in range(8):
-                if state.board[x][y] == 0:
+                if self.potentially_playable_tile(state, x, y):# Slight optimization so we don't check EVERY empty tile
                     new_state = state.play(x, y)
                     if new_state:
                         moves.append(new_state)
         return moves 
-     
+
     # MinMax     
     def minimax(self, state, depth, maximizing_player):
         if depth == 0 or self.is_game_over(state):

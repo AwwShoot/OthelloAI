@@ -13,7 +13,7 @@ class Othello:
              [0,0,0,0,0,0,0,0]] #7
     player = 1 #1 for black 2 for white
     turn = 0 # number of elapsed turns for ply
-    depth = 3
+    depth = 1
     
     # Heuristic tracking values
     board_value = 0 # All heuristic values contribute to this, which will act as the true "value" of this board state
@@ -21,6 +21,7 @@ class Othello:
     total_black = 0
     permanent_black = 0
     permanent_white = 0
+    possible_moves = 0
 
     def __init__(self, board = board, player = player, turn = turn):
         self.board = board
@@ -121,7 +122,11 @@ class Othello:
 
 
     def set_heuristics(self): # sets heuristic values of the board.
-
+        self.board_value = 0
+        self.total_black = 0
+        self.total_white = 0
+        self.permanent_white = 0
+        self.permanent_black = 0
 
 
         # Count extra for pieces that can't be changed anymore
@@ -189,14 +194,15 @@ class Othello:
         # This will speed things up and allow for potentially higher ply in the time it takes other algorithms to predict
         future_board = self.clone()
         future_board.player = (self.player % 2) + 1  # This board but when the opponent's about to play.
+        self.possible_moves = len(self.get_possible_moves(self))
         if self.player == 1:
             self.board_value = (self.total_black + 2 * self.permanent_black
                                 - self.total_white + 2 * self.permanent_white
-                                - 5 * len(self.get_possible_moves(future_board)))
+                                - 5 * self.possible_moves)
         else:
             self.board_value = (self.total_white + 2 * self.permanent_white
                                 - self.total_black + 2 * self.permanent_black
-                                - 5 * len(self.get_possible_moves((future_board))))
+                                - 5 * self.possible_moves)
     # Returns true iff the given coordinate has a tile immediately adjacent or diagonal to it
     def potentially_playable_tile(self, state, x, y):
         valid = False

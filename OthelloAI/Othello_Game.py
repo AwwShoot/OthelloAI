@@ -13,7 +13,7 @@ class Othello:
              [0,0,0,0,0,0,0,0]] #7
     player = 1 #1 for black 2 for white
     turn = 0 # number of elapsed turns for ply
-    depth = 1
+    depth = 5
     
     # Heuristic tracking values
     board_value = 0 # All heuristic values contribute to this, which will act as the true "value" of this board state
@@ -22,6 +22,8 @@ class Othello:
     permanent_black = 0
     permanent_white = 0
     possible_moves = 0
+    corners_white = 0
+    corners_black = 0
 
     def __init__(self, board = board, player = player, turn = turn):
         self.board = board
@@ -127,6 +129,8 @@ class Othello:
         self.total_white = 0
         self.permanent_white = 0
         self.permanent_black = 0
+        self.corners_black = 0
+        self.corners_white = 0
 
 
         # Count extra for pieces that can't be changed anymore
@@ -136,8 +140,12 @@ class Othello:
                 value = self.board[x][y]
                 if value == 1:
                     self.total_black += 1
+                    if x ==y and (y == 0 or y == 7):
+                        self.corners_black += 1 #Corners are worth a LOT
                 elif value == 2:
                     self.total_white += 1
+                    if x ==y and (y == 0 or y == 7):
+                        self.corners_white += 1 #Corners are worth a LOT
                 else:
                     continue # No need to calculate a blank tile
                 # Check the X axis
@@ -175,7 +183,7 @@ class Othello:
                         xy_after = False
                         break
                     check_xy += 1
-                # If at least one side on all axis are blocked, then count the tile
+                # If at least one side on all axis are blocked, then count the tile for extra
                 if (x_before or x_after) and (y_before or y_after) and (xy_before or xy_after):
                     if value == 1:
                         self.permanent_black += 1
@@ -196,13 +204,23 @@ class Othello:
         future_board.player = (self.player % 2) + 1  # This board but when the opponent's about to play.
         self.possible_moves = len(self.get_possible_moves(self))
         if self.player == 1:
-            self.board_value = (self.total_black + 2 * self.permanent_black
-                                - self.total_white + 2 * self.permanent_white
-                                - 5 * self.possible_moves)
+            if self.possible_moves == 0 and self.total_black < self.total_white:
+                self.board_value = -1000 # DON'T pick a move that ends the game unless you win
+            else:
+                self.board_value = (self.total_black + 10 * self.permanent_black
+                                    + self.corners_black * 100
+                                    - self.total_white + 10 * self.permanent_white
+                                    - self.corners_white * 100
+                                    - 5 * self.possible_moves)
         else:
-            self.board_value = (self.total_white + 2 * self.permanent_white
-                                - self.total_black + 2 * self.permanent_black
-                                - 5 * self.possible_moves)
+            if self.possible_moves ==0  and self.total_white < self.total_black:
+                self.board_value = -1000 # The don't be a loser clause
+            else:
+                self.board_value = (self.total_white + 10 * self.permanent_white
+                                    + self.corners_white
+                                    - self.total_black + 10 * self.permanent_black
+                                    - self.corners_black * 100
+                                    - 5 * self.possible_moves)
     # Returns true iff the given coordinate has a tile immediately adjacent or diagonal to it
     def potentially_playable_tile(self, state, x, y):
         valid = False

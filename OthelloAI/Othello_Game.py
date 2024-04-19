@@ -119,7 +119,8 @@ class Othello:
             string_components.append(f"\nTurn number: {self.turn}\n")
             string_components.append(f"Player {self.player} to move\n")
             string_components.append(f"White has {self.total_white} pieces\n")
-            string_components.append(f"Black has {self.total_black} pieces")
+            string_components.append(f"Black has {self.total_black} pieces\n")
+            string_components.append(f"board value is {self.board_value}")
         print("".join(string_components))
 
 
@@ -140,11 +141,11 @@ class Othello:
                 value = self.board[x][y]
                 if value == 1:
                     self.total_black += 1
-                    if x ==y and (y == 0 or y == 7):
+                    if (x == 7 and y == 7) or (x == 1 and y == 7) or (x == 1 and y == 1) or (x == 7 and y == 7):
                         self.corners_black += 1 #Corners are worth a LOT
                 elif value == 2:
                     self.total_white += 1
-                    if x ==y and (y == 0 or y == 7):
+                    if (x == 7 and y == 7) or (x == 1 and y == 7) or (x == 1 and y == 1) or (x == 7 and y == 7):
                         self.corners_white += 1 #Corners are worth a LOT
                 else:
                     continue # No need to calculate a blank tile
@@ -212,15 +213,19 @@ class Othello:
                                     - self.total_white + 10 * self.permanent_white
                                     - self.corners_white * 100
                                     - 5 * self.possible_moves)
+                if self.possible_moves == 0 and self.total_black > self.total_white:
+                    self.board_value += 1000
         else:
             if self.possible_moves ==0  and self.total_white < self.total_black:
                 self.board_value = -1000 # The don't be a loser clause
             else:
                 self.board_value = (self.total_white + 10 * self.permanent_white
-                                    + self.corners_white
-                                    - self.total_black + 10 * self.permanent_black
+                                    + self.corners_white * 100
+                                    - self.total_black - 10 * self.permanent_black
                                     - self.corners_black * 100
                                     - 5 * self.possible_moves)
+                if self.possible_moves == 0 and self.total_white > self.total_black:
+                    self.board_value += 1000
     # Returns true iff the given coordinate has a tile immediately adjacent or diagonal to it
     def potentially_playable_tile(self, state, x, y):
         valid = False

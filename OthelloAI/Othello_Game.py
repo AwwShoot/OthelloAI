@@ -13,7 +13,7 @@ class Othello:
              [0,0,0,0,0,0,0,0]] #7
     player = 1 #1 for black 2 for white
     turn = 0 # number of elapsed turns for ply
-    depth = 5
+    depth = 4
     
     # Heuristic tracking values
     board_value = 0 # All heuristic values contribute to this, which will act as the true "value" of this board state
@@ -191,39 +191,28 @@ class Othello:
                     else:
                         self.permanent_white += 1
 
-        # Board state is currently measured as value for player minus value for opponent
-        # minus five times number of valid moves the opponent has
-        #-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#
-        # Value for a given player is equal to the number of tokens in their color
-        # Plus twice the number of tokens in their color that cannot be changed (essentially counting them as triple)
-        #-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#-----#
-        # The algorithm is therefore optimizing to limit opponent options as quickly as possible
-        # By including enemy options in the scoring, Alpha-Beta pruning will prune out boards
-        # With high branching factor implicitly unless they are really worth investigating.
-        # This will speed things up and allow for potentially higher ply in the time it takes other algorithms to predict
-        future_board = self.clone()
-        future_board.player = (self.player % 2) + 1  # This board but when the opponent's about to play.
+        # Board state is currently measured as value for player about to play
         self.possible_moves = len(self.get_possible_moves(self))
         if self.player == 1:
             if self.possible_moves == 0 and self.total_black < self.total_white:
-                self.board_value = -1000 # DON'T pick a move that ends the game unless you win
+                self.board_value += -1000 # DON'T pick a move that ends the game unless you win
             else:
                 self.board_value = (self.total_black + 10 * self.permanent_black
                                     + self.corners_black * 100
-                                    - self.total_white + 10 * self.permanent_white
+                                    - self.total_white - 10 * self.permanent_white
                                     - self.corners_white * 100
-                                    - 5 * self.possible_moves)
+                                    + 5 * self.possible_moves)
                 if self.possible_moves == 0 and self.total_black > self.total_white:
                     self.board_value += 1000
         else:
             if self.possible_moves ==0  and self.total_white < self.total_black:
-                self.board_value = -1000 # The don't be a loser clause
+                self.board_value += -1000 # The don't be a loser clause
             else:
                 self.board_value = (self.total_white + 10 * self.permanent_white
                                     + self.corners_white * 100
                                     - self.total_black - 10 * self.permanent_black
                                     - self.corners_black * 100
-                                    - 5 * self.possible_moves)
+                                    + 5 * self.possible_moves)
                 if self.possible_moves == 0 and self.total_white > self.total_black:
                     self.board_value += 1000
     # Returns true iff the given coordinate has a tile immediately adjacent or diagonal to it

@@ -281,7 +281,3 @@ class Othello:
         return best_move
 
         # Game end Condition
-
-    def is_game_over(self, state):
-
-        return len(self.get_possible_moves(state)) == 0
